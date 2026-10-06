@@ -1,4 +1,4 @@
-# 🎯 Golosa AR — Proyecto COIL (México - Colombia)
+# Golosa AR — Proyecto COIL (México - Colombia)
 
 **Golosa AR** (o *Avioncito*) es un videojuego móvil interactivo que reinventa este juego tradicional combinando **Realidad Aumentada (AR)**, trivias educativas y retos físicos. Este proyecto nace como una iniciativa colaborativa internacional (COIL) entre equipos de México y Colombia.
 
@@ -6,11 +6,11 @@ El prototipo está desarrollado en **Unity (plataforma Android)** empleando el p
 
 ---
 
-## 🌿 Flujo de Trabajo y Ramas (Git Workflow)
+## Flujo de Trabajo y Ramas (Git Workflow)
 
 Para asegurar que todo el equipo pueda colaborar de manera ordenada y sin sobrescribir el trabajo de los demás, hemos adoptado un flujo de trabajo estructurado en Git.
 
-> ⚠️ **Regla principal e inquebrantable:** **NUNCA** se debe hacer `push` directo a la rama `main` ni a la rama `develop`. Todo el trabajo de desarrollo debe ocurrir en la rama de `feature` correspondiente a tu tarea. Una vez que tu trabajo esté listo y probado, se debe crear un **Pull Request (PR)** hacia `develop`.
+> **Regla principal e inquebrantable:** **NUNCA** se debe hacer `push` directo a la rama `main` ni a la rama `develop`. Todo el trabajo de desarrollo debe ocurrir en la rama de `feature` correspondiente a tu tarea. Una vez que tu trabajo esté listo y probado, se debe crear un **Pull Request (PR)** hacia `develop`.
 
 ### ¿Para qué sirve cada rama?
 
@@ -32,26 +32,26 @@ Para asegurar que todo el equipo pueda colaborar de manera ordenada y sin sobres
 
 ---
 
-## 📁 Estructura del Proyecto (Arquitectura MVC en Unity)
+## Estructura del Proyecto (Arquitectura MVC en Unity)
 
 Para mantener el proyecto libre de código "spaghetti", hemos organizado los `Scripts` (y demás recursos) usando la arquitectura **MVC**. *Por favor, respeta el lugar de cada archivo.*
 
 ```text
 Assets/
-├── Prefabs/               # 📦 Elementos reutilizables listos para instanciar (tablero 3D, botones, fichas, paneles UI).
+├── Prefabs/               # Elementos reutilizables listos para instanciar (tablero 3D, botones, fichas, paneles UI).
 ├── Resources/
-│   └── Questions/         # 🧠 Bancos de preguntas y retos almacenados en archivos .json (fáciles de editar por diseñadores).
-├── Scenes/                # 🎬 Escenas principales de Unity (ej. MainMenu, ARGame, GameOver).
+│   └── Questions/         # Bancos de preguntas y retos almacenados en archivos .json (fáciles de editar por diseñadores).
+├── Scenes/                # Escenas principales de Unity (ej. MainMenu, ARGame, GameOver).
 ├── Scripts/
-│   ├── AR/                # 📷 Scripts aislados para gestionar AR (ARSessionManager, PlaneDetection, BoardPlacement).
-│   ├── Controller/        # ⚙️ (Controlador) Orquestadores lógicos (GameManager, TurnManager, ScoreSystem). Reciben inputs de View, modifican Model.
-│   ├── Data/              # 💾 Servicios de guardado y carga (ContentRepository para leer JSONs, LocalStorageService para PlayerPrefs).
-│   ├── Model/             # 🧩 (Modelo) Estructuras y estado de los datos (PlayerModel, BoardModel, GameSession). De preferencia sin MonoBehaviour.
-│   └── View/              # 👁️ (Vista) Lógica de la UI (botones, animaciones, textos). Escucha eventos del Controlador para actualizar pantalla.
-└── Sprites/               # 🎨 Imágenes 2D, íconos y texturas (idealmente importados desde Figma).
+│   ├── AR/                # Scripts aislados para gestionar AR (ARSessionManager, PlaneDetection, BoardPlacement).
+│   ├── Controller/        # (Controlador) Orquestadores lógicos (GameManager, TurnManager, ScoreSystem). Reciben inputs de View, modifican Model.
+│   ├── Data/              # Servicios de guardado y carga (ContentRepository para leer JSONs, LocalStorageService para PlayerPrefs).
+│   ├── Model/             # (Modelo) Estructuras y estado de los datos (PlayerModel, BoardModel, GameSession). De preferencia sin MonoBehaviour.
+│   └── View/              # (Vista) Lógica de la UI (botones, animaciones, textos). Escucha eventos del Controlador para actualizar pantalla.
+└── Sprites/               # Imágenes 2D, íconos y texturas (idealmente importados desde Figma).
 ```
 
-### 💡 ¿Cómo interactúan las capas?
+### ¿Cómo interactúan las capas?
 - **View (Vista):** Capta el toque del jugador en un botón de la pantalla y le avisa al **Controller**. (¡Ojo! La Vista NO evalúa respuestas ni suma puntajes).
 - **Controller (Controlador):** Escucha a la Vista, aplica las reglas del juego (ej. comprobar respuesta correcta) y actualiza el **Model**.
 - **Model (Modelo):** Modifica su estado interno (ej. suma 10 puntos) y notifica a los interesados que los datos cambiaron.
