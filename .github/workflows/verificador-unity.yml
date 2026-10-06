@@ -1,0 +1,141 @@
+name: 🛡️ Verificador Golosa AR
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  verificar-proyecto:
+    name: Revisión Automática de Calidad (Unity + MVC)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      # ==========================================
+      # 1. CARPETAS PROHIBIDAS Y APKs
+      # ==========================================
+      - name: 🚫 1. Verificar que no existan carpetas Library, Temp o APKs
+        run: |
+          if find . -maxdepth 3 \( -iname "Library" -o -iname "Temp" -o -iname "*.apk" -o -iname "*.aab" \) ! -path "./.git/*" | grep -q .; then
+            echo "::error::Se detectó la carpeta Library, Temp o un archivo .apk/.aab. Elimínalo antes de subir tus cambios."
+            exit 1
+          fi
+          echo "✅ Sin carpetas pesadas ni instaladores."
+
+      # ==========================================
+      # 2. LÍMITE DE TAMAÑO DE ARCHIVOS (50 MB)
+      # ==========================================
+      - name: 🐘 2. Límite de tamaño de archivos (Máx 50 MB)
+        run: |
+          ARCHIVOS_PESADOS=$(find . -type f -size +50M ! -path "./.git/*")
+          if [ -n "$ARCHIVOS_PESADOS" ]; then
+            echo "::error::Se detectaron archivos mayores a 50 MB (riesgo de bloqueo en GitHub):"
+            echo "$ARCHIVOS_PESADOS"
+            exit 1
+          fi
+          echo "✅ Todos los archivos pesan menos de 50 MB."
+
+      # ==========================================
+      # 3. PROHIBIR ESPACIOS EN NOMBRES DE ARCHIVOS
+      # ==========================================
+      - name: 🔤 3. Prohibir espacios en nombres de nuestras carpetas
+        run: |
+          ERROR=0
+          CARPETAS=("Assets/Scripts" "Assets/Scenes" "Assets/Sprites" "Assets/Prefabs" "Assets/Resources")
+          for dir in "${CARPETAS[@]}"; do
+            if [ -d "$dir" ]; then
+              while IFS= read -r item; do
+                echo "::error file=$item::El nombre contiene espacios: '$item'. Usa PascalCase o guiones_bajos."
+                ERROR=1
+              done < <(find "$dir" -name "* *" ! -name "*.meta")
+            fi
+          done
+          if [ $ERROR -eq 1 ]; then exit 1; fi
+          echo "✅ Ningún archivo del equipo contiene espacios en su nombre."
+
+      # ==========================================
+      # 4. PAREJA DE ARCHIVOS .META DE UNITY
+      # ==========================================
+      - name: 🧩 4. Verificar que todo archivo en Assets tenga su .meta
+        run: |
+          ERROR=0
+          if [ -d "Assets" ]; then
+            while IFS= read -r file; do
+              if [ ! -f "${file}.meta" ]; then
+                echo "::error file=$file::Falta el archivo .meta correspondiente para: $file"
+                ERROR=1
+              fi
+            done < <(find Assets -type f ! -name "*.meta" ! -name ".gitkeep" ! -name ".DS_Store")
+          fi
+          if [ $ERROR -eq 1 ]; then exit 1; fi
+          echo "✅ Todos los archivos tienen su .meta."
+
+      # ==========================================
+      # 5. CONVENCIONES C# (PASCALCASE + CLASE = ARCHIVO)
+      # ==========================================
+      - name: 💻 5. Validar scripts C# (PascalCase y coincidencia de Clase)
+        run: |
+          ERROR=0
+          if [ -d "Assets/Scripts" ]; then
+            while IFS= read -r script; do
+              filename=$(basename "$script" .cs)
+
+              # 5.1 Verificar que empiece con Mayúscula (PascalCase)
+              if [[ ! "$filename" =~ ^[A-Z][a-zA-Z0-9_]*$ ]]; then
+                echo "::error file=$script::El script '$filename.cs' debe empezar con letra MAYÚSCULA (PascalCase)."
+                ERROR=1
+              fi
+
+              # 5.2 Verificar que el nombre del archivo coincida con class/interface/struct/enum dentro del C#
+              if ! grep -Eq "(class|interface|struct|enum)[[:space:]]+${filename}\b" "$script"; then
+                echo "::error file=$script::El archivo se llama '$filename.cs', pero adentro no existe 'class $filename'. En Unity deben llamarse exactamente igual."
+                ERROR=1
+              fi
+            done < <(find Assets/Scripts -type f -name "*.cs")
+          fi
+          if [ $ERROR -eq 1 ]; then exit 1; fi
+          echo "✅ Todos los scripts C# cumplen con PascalCase y coinciden con su clase."
+
+      # ==========================================
+      # 6. VALIDACIÓN DE SINTAXIS JSON
+      # ==========================================
+      - name: 📋 6. Validar sintaxis de archivos JSON
+        run: |
+          ERROR=0
+          while IFS= read -r jsonfile; do
+            if ! python3 -m json.tool "$jsonfile" > /dev/null 2>&1; then
+              echo "::error file=$jsonfile::Error de sintaxis en el archivo JSON (revisa comas y llaves): $jsonfile"
+              ERROR=1
+            fi
+          done < <(find . -type f -name "*.json" ! -path "./.git/*" ! -path "./Packages/*")
+          if [ $ERROR -eq 1 ]; then exit 1; fi
+          echo "✅ Todos los archivos JSON son válidos."
+
+      # ==========================================
+      # 7. VERIFICAR CONFLICTOS DE GIT SIN RESOLVER
+      # ==========================================
+      - name: 🔍 7. Verificar que no existan marcas de conflicto (<<<<<<<)
+        run: |
+          if [ -d "Assets" ] && grep -rn "<<<<<<< " Assets/ 2>/dev/null; then
+            echo "::error::Se encontraron marcas de conflicto de Git (<<<<<<<) sin resolver."
+            exit 1
+          fi
+          echo "✅ Sin conflictos pendientes."
+
+      # ==========================================
+      # 8. AVISOS PREVENTIVOS (NO BLOQUEAN EL PUSH)
+      # ==========================================
+      - name: ⚠️ 8. Avisos de Debug.Log en Model/Controller
+        run: |
+          for dir in "Assets/Scripts/Controller" "Assets/Scripts/Model"; do
+            if [ -d "$dir" ]; then
+              while IFS=: read -r file line content; do
+                echo "::warning file=$file,line=$line::Debug.Log detectado en $file (Línea $line). Recuerda limpiarlo antes de pasar a main."
+              done < <(grep -rn "Debug\.Log" "$dir" 2>/dev/null || true)
+            fi
+          done
+          echo "✅ Revisión de avisos finalizada."
