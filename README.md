@@ -22,6 +22,9 @@ Para asegurar que todo el equipo pueda colaborar de manera ordenada y sin sobres
 | `feature/capa-ar` | **Realidad Aumentada.** Lógica exclusiva de AR Foundation, la detección de planos del mundo real, el posicionamiento y la interacción del tablero 3D (`Assets/Scripts/AR`, `Assets/Prefabs`). |
 | `feature/controladores-logica` | **Lógica del Juego (Controlador).** El "cerebro" del juego: Flujo de la partida, turnos de los jugadores, eventos, sistema de puntuación (`Assets/Scripts/Controller`). |
 | `feature/modelos-datos` | **Datos y Persistencia (Modelo).** Definición de las entidades (Jugador, Tablero), acceso a los bancos de preguntas (`.json`) y guardado local (`PlayerPrefs`) (`Assets/Scripts/Model`, `Assets/Scripts/Data`, `Assets/Resources/Questions`). |
+| `feature/caren` | Rama exclusiva de desarrollo asignada a Caren. |
+| `feature/alejandro` | Rama exclusiva de desarrollo asignada a Alejandro. |
+| `feature/mexico` | Rama de trabajo e integración exclusiva para el equipo de México. |
 
 **Pasos sugeridos para tu día a día:**
 1. Asegúrate de tener la rama base actualizada: `git checkout develop` seguido de `git pull origin develop`.
