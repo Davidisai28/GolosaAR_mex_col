@@ -1,0 +1,69 @@
+name: 🛡️ Verificador Golosa AR
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  verificar-integridad:
+    name: Revisar Archivos Unity, Meta y JSON
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: 🚫 1. Verificar que no existan carpetas prohibidas o APKs
+        run: |
+          echo "Verificando archivos pesados o prohibidos..."
+          if find . -maxdepth 3 -iname "Library" -o -iname "Temp" -o -iname "*.apk" | grep -q .; then
+            echo "❌ ERROR: Se detectó la carpeta Library, Temp o un archivo .apk en el repositorio."
+            exit 1
+          fi
+          echo "✅ Sin archivos prohibidos."
+
+      - name: 🧩 2. Verificar que todo archivo en Assets tenga su .meta
+        run: |
+          echo "Verificando archivos .meta de Unity..."
+          ERROR=0
+          if [ -d "Assets" ]; then
+            while IFS= read -r file; do
+              if [ ! -f "${file}.meta" ]; then
+                echo "❌ ERROR: Falta el archivo .meta para: $file"
+                ERROR=1
+              fi
+            done < <(find Assets -type f ! -name "*.meta" ! -name ".gitkeep" ! -name ".DS_Store")
+          fi
+          if [ $ERROR -eq 1 ]; then
+            echo "⚠️ Recuerda subir siempre los archivos .meta que genera Unity."
+            exit 1
+          fi
+          echo "✅ Todos los archivos de Unity tienen su .meta correspondiente."
+
+      - name: 📋 3. Validar sintaxis de todos los archivos JSON (Preguntas/Retos)
+        run: |
+          echo "Validando archivos JSON..."
+          ERROR=0
+          while IFS= read -r jsonfile; do
+            if ! python3 -m json.tool "$jsonfile" > /dev/null 2>&1; then
+              echo "❌ ERROR DE SINTAXIS en el archivo JSON: $jsonfile"
+              ERROR=1
+            else
+              echo "✔️ JSON válido: $jsonfile"
+            fi
+          done < <(find . -type f -name "*.json" ! -path "./.git/*")
+          if [ $ERROR -eq 1 ]; then
+            exit 1
+          fi
+          echo "✅ Todos los archivos JSON son válidos."
+
+      - name: 🔍 4. Revisar scripts C# (Sin conflictos de Git pendientes)
+        run: |
+          echo "Revisando scripts C#..."
+          if grep -rn "<<<<<<< " Assets/ 2>/dev/null; then
+            echo "❌ ERROR: Hay marcas de conflicto de Git sin resolver en los scripts o escenas."
+            exit 1
+          fi
+          echo "✅ Scripts limpios."
