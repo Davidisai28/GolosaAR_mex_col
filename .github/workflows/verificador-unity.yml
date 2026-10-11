@@ -139,3 +139,10 @@ jobs:
             fi
           done
           echo "✅ Revisión de avisos finalizada."
+
+      # ==========================================
+      # 9. VALIDACIÓN DE BANCOS DE PREGUNTAS
+      # ==========================================
+      - name: "9. Validar preguntas infantil y avanzados"
+        run: python3 .github/scripts/validar_preguntas.py
+
